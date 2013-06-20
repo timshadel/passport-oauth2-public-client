@@ -1,25 +1,25 @@
 var vows = require('vows');
 var assert = require('assert');
 var util = require('util');
-var ClientPasswordStrategy = require('passport-oauth2-client-password/strategy');
+var PublicClientStrategy = require('passport-oauth2-public-client/strategy');
 
 
-vows.describe('ClientPasswordStrategy').addBatch({
+vows.describe('PublicClientStrategy').addBatch({
 
   'strategy': {
     topic: function() {
-      return new ClientPasswordStrategy(function(){});
+      return new PublicClientStrategy(function(){});
     },
 
-    'should be named oauth2-client-password': function (strategy) {
-      assert.equal(strategy.name, 'oauth2-client-password');
+    'should be named oauth2-public-client': function (strategy) {
+      assert.equal(strategy.name, 'oauth2-public-client');
     },
   },
 
   'strategy handling a request': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
-        if (clientId == 'c1234' && clientSecret == 'shh-its-a-secret') {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
+        if (clientId == 'c1234') {
           done(null, { id: clientId });
         } else {
           done(null, false);
@@ -44,7 +44,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -61,8 +60,8 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy that verifies a request with additional info': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
-        if (clientId == 'c1234' && clientSecret == 'shh-its-a-secret') {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
+        if (clientId == 'c1234') {
           done(null, { id: clientId }, { foo: 'bar' });
         } else {
           done(null, false);
@@ -87,7 +86,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -107,7 +105,7 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy handling a request that is not verified': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
         done(null, false);
       });
       return strategy;
@@ -129,7 +127,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -144,7 +141,7 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy that errors while verifying request': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
         done(new Error('something went wrong'));
       });
       return strategy;
@@ -166,7 +163,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -184,7 +180,7 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy handling a request without a body': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
         done(null, false);
       });
       return strategy;
@@ -206,7 +202,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         //req.body = {};
         //req.body['client_id'] = 'c1234';
-        //req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -223,7 +218,7 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy handling a request without a client_id': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
+      var strategy = new PublicClientStrategy(function(clientId, done) {
         done(null, false);
       });
       return strategy;
@@ -245,46 +240,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         //req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
-        process.nextTick(function () {
-          strategy.authenticate(req);
-        });
-      },
-
-      'should not call success or error' : function(err, challenge, status) {
-        assert.isNull(err);
-      },
-      'should fail authentication with default status' : function(err, challenge, status) {
-        assert.isUndefined(challenge);
-      },
-    },
-  },
-
-  'strategy handling a request without a client_secret': {
-    topic: function() {
-      var strategy = new ClientPasswordStrategy(function(clientId, clientSecret, done) {
-        done(null, false);
-      });
-      return strategy;
-    },
-
-    'after augmenting with actions': {
-      topic: function(strategy) {
-        var self = this;
-        var req = {};
-        strategy.success = function(user) {
-          self.callback(new Error('should-not-be-called'));
-        }
-        strategy.fail = function(challenge, status) {
-          self.callback(null, challenge, status);
-        }
-        strategy.error = function() {
-          self.callback(new Error('should-not-be-called'));
-        }
-
-        req.body = {};
-        req.body['client_id'] = 'c1234';
-        //req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
@@ -301,15 +256,15 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
   'strategy constructed without a verify callback': {
     'should throw an error': function () {
-      assert.throws(function() { new ClientPasswordStrategy() });
+      assert.throws(function() { new PublicClientStrategy() });
     },
   },
 
   'strategy with passReqToCallback=true option': {
     topic: function() {
-      var strategy = new ClientPasswordStrategy({passReqToCallback:true}, function(req, clientId, clientSecret, done) {
+      var strategy = new PublicClientStrategy({passReqToCallback:true}, function(req, clientId, done) {
         assert.isNotNull(req);
-        if (clientId == 'c1234' && clientSecret == 'shh-its-a-secret') {
+        if (clientId == 'c1234') {
           done(null, { id: clientId, foo: req.params.foo });
         } else {
           done(null, false);
@@ -335,7 +290,6 @@ vows.describe('ClientPasswordStrategy').addBatch({
 
         req.body = {};
         req.body['client_id'] = 'c1234';
-        req.body['client_secret'] = 'shh-its-a-secret';
         process.nextTick(function () {
           strategy.authenticate(req);
         });
